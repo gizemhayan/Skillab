@@ -1,0 +1,94 @@
+# ============================================================================
+# Skillab Turkey - Professional Skill Intelligence Hub
+# EU Horizon Project - Requirements File
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Core Dependencies
+# ----------------------------------------------------------------------------
+python-dotenv==1.0.1        # Environment configuration management
+pydantic==2.11.3           # Data validation and settings management
+pydantic-settings==2.8.1   # Extended settings management
+
+# ----------------------------------------------------------------------------
+# Web Scraping & HTTP
+# ----------------------------------------------------------------------------
+requests==2.31.0           # HTTP library for API calls
+httpx==0.27.0              # Modern async HTTP client
+beautifulsoup4==4.12.3     # HTML/XML parsing
+lxml==5.3.0                # Fast XML and HTML processing
+selenium==4.18.1           # Browser automation (for dynamic content)
+playwright==1.55.0         # Modern browser automation alternative
+undetected-chromedriver==3.5.4  # Use local Chrome/chromedriver without webdriver-manager
+
+# ----------------------------------------------------------------------------
+# Data Processing & Analysis
+# ----------------------------------------------------------------------------
+pandas==2.2.3              # Data manipulation and analysis
+numpy==2.2.3               # Numerical computing
+scipy==1.14.1              # Scientific computing and statistics
+polars==0.20.15            # High-performance DataFrame library
+openpyxl==3.1.5            # Excel read/write engine
+
+# ----------------------------------------------------------------------------
+# Visualization (Publication-Ready Charts)
+# ----------------------------------------------------------------------------
+matplotlib==3.10.8         # Core plotting library
+seaborn==0.13.2            # Statistical visualization
+networkx==3.6.1            # Skill interaction network graphs
+
+# ----------------------------------------------------------------------------
+# Natural Language Processing
+# ----------------------------------------------------------------------------
+spacy==3.8.7               # Industrial-strength NLP
+spacy-lookups-data==1.0.5  # Additional language data for spaCy
+
+# ----------------------------------------------------------------------------
+# Graph Analysis & Causal Discovery
+# ----------------------------------------------------------------------------
+causal-learn==0.1.3.8      # Causal discovery algorithms
+pgmpy==0.1.25              # Probabilistic graphical models
+
+# ----------------------------------------------------------------------------
+# Logging & Monitoring
+# ----------------------------------------------------------------------------
+structlog==24.1.0          # Structured logging for production systems
+colorama==0.4.6            # Cross-platform colored terminal output
+
+# ----------------------------------------------------------------------------
+# Database & Storage
+# ----------------------------------------------------------------------------
+sqlalchemy==2.0.28         # SQL toolkit and ORM
+alembic==1.13.1            # Database migration tool
+psycopg2-binary==2.9.10    # PostgreSQL adapter (optional)
+
+# ----------------------------------------------------------------------------
+# Task Queue & Async (for scalability)
+# ----------------------------------------------------------------------------
+celery==5.3.6              # Distributed task queue
+redis==5.0.2               # Redis client for caching/queuing
+
+# ----------------------------------------------------------------------------
+# Testing & Quality Assurance
+# ----------------------------------------------------------------------------
+pytest==8.1.1              # Testing framework
+pytest-asyncio==0.23.5     # Async test support
+pytest-cov==4.1.0          # Coverage plugin
+pytest-mock==3.12.0        # Mocking plugin
+black==24.2.0              # Code formatter
+flake8==7.0.0              # Linting tool
+mypy==1.8.0                # Static type checker
+isort==5.13.2              # Import sorting
+
+# ----------------------------------------------------------------------------
+# Development Tools
+# ----------------------------------------------------------------------------
+ipython==8.22.1            # Enhanced Python shell
+jupyter==1.0.0             # Notebook environment for analysis
+pre-commit==3.6.2          # Git hooks for quality checks
+
+# ----------------------------------------------------------------------------
+# API & Web Framework (optional, for future dashboard)
+# ----------------------------------------------------------------------------
+fastapi==0.110.0           # Modern web framework
+uvicorn==0.28.0            # ASGI server
