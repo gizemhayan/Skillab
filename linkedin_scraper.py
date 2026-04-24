@@ -508,8 +508,49 @@ def scrape_job_detail(driver, default_keyword="Yazılım|Mühendislik"):
     job["education_level"] = ""
     job["salary_range"] = ""
     job["department"] = ""
-    job["digital_concepts"] = json.dumps([], ensure_ascii=False)
-    job["green_concepts"] = json.dumps([], ensure_ascii=False)
+
+    # Digital & Green skills from job insight sections.
+    try:
+        all_insights = driver.find_elements(
+            By.CSS_SELECTOR,
+            "div.job-details-jobs-unified-top-card__job-insight, "
+            "li.job-details-jobs-unified-top-card__job-insight",
+        )
+
+        digital_skills = []
+        green_skills = []
+
+        for insight in all_insights:
+            outer = (insight.get_attribute("outerHTML") or "").lower()
+            text = insight.text.strip()
+
+            if not text:
+                continue
+
+            if any(k in outer for k in ["digital", "dijital", "technology", "tech-skill"]):
+                digital_skills.append(text)
+            elif any(k in outer for k in ["green", "sustainability", "yeşil", "sustainable"]):
+                green_skills.append(text)
+
+        # Fallback: skill-match section if top-card insights are empty.
+        if not digital_skills and not green_skills:
+            skill_tags = driver.find_elements(
+                By.CSS_SELECTOR,
+                "a.job-details-skill-match-status-list__unmatched-skill-link, "
+                "span.job-details-skill-match-status-list__skill-text",
+            )
+            all_text = [s.text.strip() for s in skill_tags if s.text.strip()]
+            if all_text:
+                digital_skills = all_text
+
+        job["digital_concepts"] = " | ".join(sorted(set(digital_skills)))
+        job["green_concepts"] = " | ".join(sorted(set(green_skills)))
+
+    except Exception as e:
+        job["digital_concepts"] = ""
+        job["green_concepts"] = ""
+        print(f"  ⚠ Skills parse hatası: {e}")
+
     job["search_keyword"] = default_keyword
 
     return job
