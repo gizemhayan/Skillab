@@ -136,9 +136,7 @@ class ESCOMapper:
             is_mapped=False,
         )
 
-    def map_batch(
-        self, extracted_skills: List[ExtractedSkill]
-    ) -> List[SkillMatch]:
+    def map_batch(self, extracted_skills: List[ExtractedSkill]) -> List[SkillMatch]:
         """
         Map a list of ExtractedSkill instances to ESCO concepts.
 
@@ -208,9 +206,7 @@ class ESCOMapper:
                 return None
 
             raw_alts = row.get("altLabels", "")
-            alt_labels = [
-                a.strip() for a in raw_alts.split("|") if a.strip()
-            ]
+            alt_labels = [a.strip() for a in raw_alts.split("|") if a.strip()]
 
             return ESCOSkill(
                 concept_uri=uri,
@@ -268,8 +264,6 @@ class ESCOMapper:
         if close:
             best_label = close[0]
             skill = self._corpus_to_skill[best_label]
-            ratio = difflib.SequenceMatcher(
-                None, normalised, best_label
-            ).ratio()
+            ratio = difflib.SequenceMatcher(None, normalised, best_label).ratio()
             return skill, round(ratio, 4)
         return None, 0.0

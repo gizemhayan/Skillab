@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe quick_esco_tagger_v2.py --input outputs/linkedin_esco_tagged_clean.xlsx --output outputs/linkedin_esco_tagged_v4.xlsx --digital data/esco/digitalSkillsCollection_en.csv --green data/esco/greenSkillsCollection_en.csv)",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe -m flake8 --max-line-length=100 --extend-ignore=E501 --exclude=.venv,venv,.venv-1,data,outputs,results linkedin_scraper.py quick_esco_tagger_v2.py esco_description_tagger.py esco_skill_analysis.py skill_demand_analysis.py publication_analysis.py src/processing/skill_extractor.py src/utils/models.py src/utils/logger.py src/analyzer/turkish_concepts.py src/analyzer/esco_mapper.py src/analyzer/gap_analyzer.py)",
+      "Bash(.venv/Scripts/python.exe -m black --line-length 100 linkedin_scraper.py quick_esco_tagger_v2.py esco_description_tagger.py esco_skill_analysis.py skill_demand_analysis.py publication_analysis.py src/processing/skill_extractor.py src/utils/models.py src/utils/logger.py src/analyzer/turkish_concepts.py src/analyzer/esco_mapper.py src/analyzer/gap_analyzer.py)",
+      "Bash(.venv/Scripts/python.exe -m flake8 --max-line-length=100 --extend-ignore=E501,E203 --exclude=.venv,venv,.venv-1,data,outputs,results linkedin_scraper.py quick_esco_tagger_v2.py esco_description_tagger.py esco_skill_analysis.py skill_demand_analysis.py publication_analysis.py src/processing/skill_extractor.py src/utils/models.py src/utils/logger.py src/analyzer/turkish_concepts.py src/analyzer/esco_mapper.py src/analyzer/gap_analyzer.py)",
+      "Bash(.venv/Scripts/python.exe -m black --line-length 100 src/analyzer/turkish_concepts.py)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:pypi.org)",
+      "WebSearch",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(python *)",
+      "Bash(.venv/Scripts/pip show *)",
+      "Bash(python3)",
+      "Bash(cat)",
+      "Bash(bash /tmp/analyze_files.sh)",
+      "Bash(pip install *)",
+      "Bash(.venv\\\\Scripts\\\\python.exe esco_analysis_pipeline.py)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Gizem\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Gizem-Desktop-skillab-turkiye\\\\8833e477-921b-457e-8d06-c771ae1f6b75\\\\tasks\\\\bivn1ct86.output\" -Raw)",
+      "WebFetch(domain:skillab-project.eu)",
+      "WebFetch(domain:www.mdpi.com)",
+      "WebFetch(domain:www.researchgate.net)",
+      "WebFetch(domain:www.sciencedirect.com)",
+      "PowerShell(cd \"c:\\\\Users\\\\Gizem\\\\Desktop\\\\skillab_turkiye\\\\outputs\"; Get-ChildItem -File | Where-Object { $_.Name -ne \"final_esco_analysis.xlsx\" } | Remove-Item -Force; Get-ChildItem -Directory | Where-Object { $_.Name -ne \"analysis\" } | Remove-Item -Recurse -Force; Write-Host \"Done. Remaining:\"; Get-ChildItem)",
+      "WebFetch(domain:link.springer.com)"
+    ]
+  }
+}

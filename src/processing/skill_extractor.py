@@ -2,7 +2,7 @@
 Skill extraction pipeline for Skillab Turkiye.
 
 Pipeline position:  Stage 2 — Text Processing & Skill Extraction
-Input:              data/raw_jobs.csv  (produced by the Stage 1 scraper)
+Input:              LinkedIn Excel export (Full Description column)
 Output:             data/skill_inventory.xlsx  (two sheets)
 
   Sheet 1 – Skill Inventory : human-readable, bulleted skill lists per job.
@@ -19,6 +19,7 @@ Project: EU Horizon Skill Intelligence Hub
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -31,32 +32,10 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-INPUT_PATH = Path("data/raw_jobs.csv")
+INPUT_PATH = Path("data/skill_inventory.xlsx")
 OUTPUT_PATH = Path("data/skill_inventory.xlsx")
+ESCO_DEFAULT_PATH = Path("data/esco/skills_en.csv")
 
-# Common Kariyer.net noise markers observed in the raw export.
-# These are removed entirely from the description text.
-NOISE_PHRASES: List[str] = [
-    "Kariyer Planlaması",
-    "Maaş Hesaplama",
-    "Kariyer Rehberi",
-    "Kariyer Blog",
-    "CV Örnekleri",
-    "İlan Paketi Al",
-    "Giriş Yap / Üye Ol",
-    "Aday Girişi",
-    "İşveren Girişi",
-    "SİTE KULLANIMI",
-    "VERİ POLİTİKAMIZ",
-    "Sık Sorulan Sorular",
-    "Hakkımızda",
-    "Copyright",
-    "Bizi Takip Edin",
-    "Kariyer Tavsiyeleri",
-    "İlanı Şikayet Et",
-    "Keşfetmeye Devam Et",
-    "Bu Pozisyon İçin Sık Paylaşılan Maaşlar",
-]
 
 # Refined description range delimiters.
 # Priority: if "İş İlanı Hakkında" is not found, fallback markers are used.
@@ -72,9 +51,6 @@ START_MARKER_PATTERNS: List[Pattern[str]] = [
 END_MARKER_PATTERNS: List[Pattern[str]] = [
     re.compile(r"aday\s+kriterleri", re.IGNORECASE),
     re.compile(r"şirket\s+hakkında", re.IGNORECASE),
-    re.compile(r"bu\s+pozisyon\s+için\s+sık\s+paylaşılan\s+maaşlar", re.IGNORECASE),
-    re.compile(r"kariyer\s+tavsiyeleri", re.IGNORECASE),
-    re.compile(r"ilanı\s+şikayet\s+et", re.IGNORECASE),
     re.compile(r"site\s+kullanımı", re.IGNORECASE),
     re.compile(r"veri\s+politikamız", re.IGNORECASE),
     re.compile(r"copyright", re.IGNORECASE),
@@ -136,11 +112,15 @@ SKILL_PATTERNS: Dict[str, Pattern[str]] = {
 
 SOFT_SKILL_PATTERNS: Dict[str, Pattern[str]] = {
     "Iletisim": re.compile(r"\biletişim\b|\bcommunication\b", re.IGNORECASE),
-    "Takim Calismasi": re.compile(r"\btakım\s+çalışması\b|\bteamwork\b|\bteam\s+player\b", re.IGNORECASE),
+    "Takim Calismasi": re.compile(
+        r"\btakım\s+çalışması\b|\bteamwork\b|\bteam\s+player\b", re.IGNORECASE
+    ),
     "Liderlik": re.compile(r"\bliderlik\b|\bleadership\b", re.IGNORECASE),
     "Problem Cozme": re.compile(r"\bproblem\s+çözme\b|\bproblem\s+solving\b", re.IGNORECASE),
     "Yaraticilik": re.compile(r"\byaratıcılık\b|\bcreativity\b", re.IGNORECASE),
-    "Analitik Dusunme": re.compile(r"\banalitik\s+düşünme\b|\banalytical\s+thinking\b", re.IGNORECASE),
+    "Analitik Dusunme": re.compile(
+        r"\banalitik\s+düşünme\b|\banalytical\s+thinking\b", re.IGNORECASE
+    ),
     "Zaman Yonetimi": re.compile(r"\bzaman\s+yönetimi\b|\btime\s+management\b", re.IGNORECASE),
 }
 
@@ -171,17 +151,9 @@ TARGET_SKILL_KEYWORDS: List[str] = [
 # Pre-compiled bulk-cleaning patterns (vectorised, column-level application)
 # ---------------------------------------------------------------------------
 
-_NOISE_PHRASES_REGEX: re.Pattern = re.compile(
-    "|".join(re.escape(p) for p in NOISE_PHRASES),
-    re.IGNORECASE,
-)
 _UI_TOKENS_REGEX: re.Pattern = re.compile(
     r"\b(keyboard_arrow_down|navigate_next|navigate_before|"
     r"thumb_up|thumb_down|chevron_right)\b",
-    re.IGNORECASE,
-)
-_NAV_CHROME_REGEX: re.Pattern = re.compile(
-    r"\b(ana\s+sayfa|iş\s+ilanları|ilanları\s+gör|kaydet\s+başvur)\b",
     re.IGNORECASE,
 )
 _PHONE_REGEX: re.Pattern = re.compile(r"\b\d{3,4}[\s\-]?\d{2,4}[\s\-]?\d{2,4}\b")
@@ -363,7 +335,9 @@ def build_skill_frequency_table(
         return pd.DataFrame(columns=["Yetenek", "Frekans"])
 
     frequencies = {
-        keyword: int(descriptions.str.count(rf"\b{re.escape(keyword)}\b", flags=re.IGNORECASE).sum())
+        keyword: int(
+            descriptions.str.count(rf"\b{re.escape(keyword)}\b", flags=re.IGNORECASE).sum()
+        )
         for keyword in keywords
     }
     frequency_df = pd.DataFrame(
@@ -372,7 +346,9 @@ def build_skill_frequency_table(
             "Frekans": list(frequencies.values()),
         }
     )
-    return frequency_df.sort_values(by=["Frekans", "Yetenek"], ascending=[False, True]).reset_index(drop=True)
+    return frequency_df.sort_values(by=["Frekans", "Yetenek"], ascending=[False, True]).reset_index(
+        drop=True
+    )
 
 
 def build_processed_dataset(df: pd.DataFrame) -> pd.DataFrame:
@@ -420,21 +396,14 @@ def build_processed_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
     # ── Step 2: vectorised bulk cleaning (fast on large datasets) ────────────
     col = work["cleaned_description"]
-    col = col.str.replace(_NOISE_PHRASES_REGEX, " ", regex=True)
     col = col.str.replace(_UI_TOKENS_REGEX, " ", regex=True)
-    col = col.str.replace(_NAV_CHROME_REGEX, " ", regex=True)
-    col = col.str.replace(
-        re.compile(r"site\s+kullanımı.+", re.IGNORECASE), " ", regex=True
-    )
     col = col.str.replace(_PHONE_REGEX, " ", regex=True)
     col = col.str.replace(_NBSP_REGEX, " ", regex=True)
     col = col.str.replace(_WHITESPACE_REGEX, " ", regex=True).str.strip()
     work["cleaned_description"] = col
 
     # ── Step 3: preprocessing for consistent keyword analysis ────────────────
-    work["normalized_description"] = work["cleaned_description"].map(
-        preprocess_description_text
-    )
+    work["normalized_description"] = work["cleaned_description"].map(preprocess_description_text)
 
     # ── Step 4: discard rows with no usable description ──────────────────────
     before = len(work)
@@ -471,9 +440,7 @@ def build_processed_dataset(df: pd.DataFrame) -> pd.DataFrame:
     )
     work["soft_skills_display"] = work["soft_skills"].map(_skills_to_bullets)
     work["competency_clusters"] = work["extracted_skills"].map(_build_competency_clusters)
-    work["competency_clusters_display"] = work["competency_clusters"].map(
-        _skills_to_bullets
-    )
+    work["competency_clusters_display"] = work["competency_clusters"].map(_skills_to_bullets)
 
     return work.reset_index(drop=True)
 
@@ -481,6 +448,7 @@ def build_processed_dataset(df: pd.DataFrame) -> pd.DataFrame:
 # ============================================================================
 # Excel output helpers
 # ============================================================================
+
 
 def _style_header_row(ws) -> None:
     """Apply Skillab brand styling to the header row of a worksheet."""
@@ -576,9 +544,234 @@ def _write_excel(
         _format_analysis_sheet(writer.book["Yetenek_Analizi"])
 
 
+def _find_description_column(columns: List[str]) -> str:
+    """Resolve the best-fit description column from an Excel dataset."""
+    canonical = {str(col).strip().lower(): col for col in columns}
+    candidates = [
+        "description",
+        "full_description",
+        "full description",
+        "job_description",
+        "job description",
+    ]
+    for key in candidates:
+        if key in canonical:
+            return canonical[key]
+    raise ValueError(
+        "Input Excel must contain one of: description, full_description, full description, "
+        "job_description, job description."
+    )
+
+
+def _build_esco_phrase_index(esco_csv_path: Path) -> tuple[Dict[str, Dict[str, str]], int]:
+    """
+    Build a normalized phrase index from ESCO CSV for digital/green skills only.
+
+    Returns:
+        - phrase_index: normalized phrase -> metadata dict
+        - max_ngram_len: maximum phrase token length
+    """
+    esco_df = pd.read_csv(esco_csv_path)
+    required_cols = {"conceptUri", "preferredLabel", "altLabels", "pillar"}
+    missing = required_cols - set(esco_df.columns)
+    if missing:
+        missing_list = ", ".join(sorted(missing))
+        raise ValueError(f"ESCO CSV is missing required columns: {missing_list}")
+
+    phrase_index: Dict[str, Dict[str, str]] = {}
+    max_ngram_len = 1
+
+    for _, row in esco_df.iterrows():
+        pillar = str(row.get("pillar", "")).strip().lower()
+        if pillar not in {"digital", "green"}:
+            continue
+
+        concept_uri = str(row.get("conceptUri", "")).strip()
+        preferred_label = str(row.get("preferredLabel", "")).strip()
+        if not concept_uri or not preferred_label:
+            continue
+
+        terms = [preferred_label]
+        alt_labels = str(row.get("altLabels", "") or "")
+        if alt_labels and alt_labels.lower() != "nan":
+            terms.extend([item.strip() for item in alt_labels.split("|") if item.strip()])
+
+        for term in terms:
+            normalized_term = preprocess_description_text(term)
+            if not normalized_term:
+                continue
+
+            phrase_index.setdefault(
+                normalized_term,
+                {
+                    "esco_preferred_label": preferred_label,
+                    "esco_uri": concept_uri,
+                    "label": pillar,
+                },
+            )
+            max_ngram_len = max(max_ngram_len, len(normalized_term.split()))
+
+    if not phrase_index:
+        raise ValueError("No digital/green ESCO terms found in the provided taxonomy CSV.")
+
+    return phrase_index, max_ngram_len
+
+
+def _extract_esco_matches_from_description(
+    normalized_description: str,
+    phrase_index: Dict[str, Dict[str, str]],
+    max_ngram_len: int,
+) -> List[Dict[str, object]]:
+    """Extract ESCO digital/green skill phrases using longest-first n-gram matching."""
+    if not normalized_description:
+        return []
+
+    tokens = normalized_description.split()
+    if not tokens:
+        return []
+
+    used = [False] * len(tokens)
+    matches: List[Dict[str, object]] = []
+    seen_uris: set[str] = set()
+
+    n_max = min(max_ngram_len, len(tokens))
+    for n in range(n_max, 0, -1):
+        for i in range(0, len(tokens) - n + 1):
+            if any(used[i : i + n]):
+                continue
+
+            phrase = " ".join(tokens[i : i + n])
+            meta = phrase_index.get(phrase)
+            if not meta:
+                continue
+
+            uri = meta["esco_uri"]
+            if uri in seen_uris:
+                continue
+
+            for j in range(i, i + n):
+                used[j] = True
+
+            seen_uris.add(uri)
+            matches.append(
+                {
+                    "skill": phrase,
+                    "label": meta["label"],
+                    "esco_preferred_label": meta["esco_preferred_label"],
+                    "esco_uri": uri,
+                    "match_method": "exact_phrase",
+                    "match_score": 1.0,
+                }
+            )
+
+    return matches
+
+
+def run_esco_excel_labeling(
+    input_excel_path: Path,
+    output_excel_path: Path,
+    esco_csv_path: Path = ESCO_DEFAULT_PATH,
+    sheet_name: int | str = 0,
+) -> pd.DataFrame:
+    """
+    Process the description column in an Excel file and label each extracted
+    skill as digital/green using ESCO taxonomy.
+
+    Writes a new Excel workbook with:
+      1. `ESCO_Skill_Labels`     - row-level skill labels.
+      2. `ESCO_Skill_Summary`    - grouped label frequencies.
+
+    Args:
+        input_excel_path: Source Excel file containing description text.
+        output_excel_path: Destination Excel path for labeled result.
+        esco_csv_path: ESCO taxonomy CSV path (skills_en.csv format).
+        sheet_name: Sheet index or name to read from input workbook.
+
+    Returns:
+        Row-level labeled skill DataFrame.
+    """
+    logger.info(
+        "esco_excel_labeling_started",
+        input=str(input_excel_path),
+        output=str(output_excel_path),
+        esco_csv=str(esco_csv_path),
+    )
+
+    if not input_excel_path.exists():
+        raise FileNotFoundError(f"Input Excel not found: {input_excel_path}")
+    if not esco_csv_path.exists():
+        raise FileNotFoundError(
+            f"ESCO taxonomy CSV not found: {esco_csv_path}. "
+            "Download ESCO skills CSV and place it at this path."
+        )
+
+    source_df = pd.read_excel(input_excel_path, sheet_name=sheet_name)
+    if source_df.empty:
+        raise ValueError("Input Excel sheet is empty.")
+
+    desc_col = _find_description_column(list(source_df.columns))
+    working_df = source_df.copy()
+    working_df[desc_col] = working_df[desc_col].fillna("").astype(str)
+
+    phrase_index, max_ngram_len = _build_esco_phrase_index(esco_csv_path)
+    working_df["normalized_description"] = working_df[desc_col].map(preprocess_description_text)
+
+    labeled_rows: List[Dict[str, object]] = []
+    for idx, row in working_df.iterrows():
+        description_text = row[desc_col]
+        skill_matches = _extract_esco_matches_from_description(
+            row["normalized_description"], phrase_index, max_ngram_len
+        )
+        for mapped_payload in skill_matches:
+            labeled_rows.append(
+                {
+                    "source_row": int(idx) + 1,
+                    "description": description_text,
+                    **mapped_payload,
+                }
+            )
+
+    labeled_df = pd.DataFrame(
+        labeled_rows,
+        columns=[
+            "source_row",
+            "description",
+            "skill",
+            "label",
+            "esco_preferred_label",
+            "esco_uri",
+            "match_method",
+            "match_score",
+        ],
+    )
+
+    summary_df = (
+        labeled_df.groupby(["skill", "label"], as_index=False)
+        .size()
+        .rename(columns={"size": "count"})
+        .sort_values(by=["count", "skill"], ascending=[False, True])
+    )
+
+    output_excel_path.parent.mkdir(parents=True, exist_ok=True)
+    with pd.ExcelWriter(output_excel_path, engine="openpyxl") as writer:
+        labeled_df.to_excel(writer, index=False, sheet_name="ESCO_Skill_Labels")
+        summary_df.to_excel(writer, index=False, sheet_name="ESCO_Skill_Summary")
+        _style_header_row(writer.book["ESCO_Skill_Labels"])
+        _style_header_row(writer.book["ESCO_Skill_Summary"])
+
+    logger.info(
+        "esco_excel_labeling_completed",
+        output=str(output_excel_path),
+        rows=len(labeled_df),
+        unique_skills=labeled_df["skill"].nunique() if not labeled_df.empty else 0,
+    )
+    return labeled_df
+
+
 # ============================================================================
 # Public pipeline entry point
 # ============================================================================
+
 
 def run_extraction(
     input_path: Path = INPUT_PATH,
@@ -587,11 +780,8 @@ def run_extraction(
     """
     Run the full Stage 2 extraction pipeline and persist output to Excel.
 
-    Can be called by ``main.py`` as part of an end-to-end pipeline run, or
-    executed standalone via ``python -m src.processing.skill_extractor``.
-
     Args:
-        input_path:  Path to raw_jobs.csv produced by Stage 1.
+        input_path:  Path to input CSV with a full_description column.
         output_path: Destination path for the Excel workbook.
 
     Returns:
@@ -614,9 +804,7 @@ def run_extraction(
 
     try:
         processed_df = build_processed_dataset(raw_df)
-        skill_frequency_df = build_skill_frequency_table(
-            processed_df["normalized_description"]
-        )
+        skill_frequency_df = build_skill_frequency_table(processed_df["normalized_description"])
     except Exception as exc:
         logger.error("processing_failed", error=str(exc), exc_info=True)
         raise RuntimeError(f"Dataset processing failed: {exc}") from exc
@@ -638,9 +826,42 @@ def run_extraction(
 
 
 def main() -> None:
-    """CLI entry point — runs the Stage 2 extraction pipeline."""
+    """CLI entry point for CSV extraction or ESCO-labeled Excel processing."""
+    parser = argparse.ArgumentParser(description="Skill extraction and ESCO labeling")
+    parser.add_argument(
+        "--excel-input",
+        type=Path,
+        help="Input Excel path containing description/full_description column.",
+    )
+    parser.add_argument(
+        "--excel-output",
+        type=Path,
+        default=Path("data/esco_labeled_skills.xlsx"),
+        help="Output Excel path for ESCO digital/green labels.",
+    )
+    parser.add_argument(
+        "--esco-csv",
+        type=Path,
+        default=ESCO_DEFAULT_PATH,
+        help="ESCO taxonomy CSV path (skills_en.csv).",
+    )
+    parser.add_argument(
+        "--sheet",
+        default=0,
+        help="Excel sheet name or index for --excel-input mode.",
+    )
+    args = parser.parse_args()
+
     try:
-        run_extraction()
+        if args.excel_input:
+            run_esco_excel_labeling(
+                input_excel_path=args.excel_input,
+                output_excel_path=args.excel_output,
+                esco_csv_path=args.esco_csv,
+                sheet_name=args.sheet,
+            )
+        else:
+            run_extraction()
     except FileNotFoundError as exc:
         logger.error("input_not_found", detail=str(exc))
         raise SystemExit(1) from exc

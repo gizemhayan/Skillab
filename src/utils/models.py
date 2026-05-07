@@ -23,12 +23,13 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field
 
 
 # ============================================================================
 # Enumerations
 # ============================================================================
+
 
 class SkillCategory(str, Enum):
     """ESCO-aligned skill category taxonomy."""
@@ -63,6 +64,7 @@ class MatchMethod(str, Enum):
 # Stage 1 — Scraping
 # ============================================================================
 
+
 class JobListing(BaseModel):
     """
     Compact job record extracted from a search-results page.
@@ -77,18 +79,11 @@ class JobListing(BaseModel):
     company: str = Field(description="Hiring company name.")
     location: str = Field(description="City or region of the position.")
     url: str = Field(description="Absolute URL to the full job detail page.")
-    platform: str = Field(default="kariyer.net", description="Source platform identifier.")
+    platform: str = Field(default="linkedin", description="Source platform identifier.")
     scraped_at: datetime = Field(
         default_factory=datetime.utcnow,
         description="UTC timestamp when the listing was captured.",
     )
-
-    @field_validator("url", mode="before")
-    @classmethod
-    def ensure_absolute_url(cls, v: str) -> str:
-        if v and v.startswith("/"):
-            return f"https://www.kariyer.net{v}"
-        return v
 
 
 class JobDetail(BaseModel):
@@ -140,6 +135,7 @@ class JobDetail(BaseModel):
 # Stage 2 — Skill Extraction (NLP)
 # ============================================================================
 
+
 class ExtractedSkill(BaseModel):
     """
     A single skill token identified by the NLP extraction pipeline.
@@ -174,6 +170,7 @@ class ExtractedSkill(BaseModel):
 # Stage 3 — ESCO Mapping
 # ============================================================================
 
+
 class ESCOSkill(BaseModel):
     """
     Canonical ESCO skill record loaded from the official taxonomy dataset.
@@ -185,9 +182,7 @@ class ESCOSkill(BaseModel):
     model_config = {"extra": "ignore"}
 
     concept_uri: str = Field(description="Canonical ESCO concept URI (primary key).")
-    preferred_label: str = Field(
-        description="ESCO preferred label in the configured language."
-    )
+    preferred_label: str = Field(description="ESCO preferred label in the configured language.")
     alt_labels: List[str] = Field(
         default_factory=list,
         description="Alternative labels and synonyms from ESCO alt_labels column.",
@@ -245,6 +240,7 @@ class SkillMatch(BaseModel):
 # Stage 4 — Gap Analysis & Forecasting
 # ============================================================================
 
+
 class SkillDemandMetric(BaseModel):
     """
     Aggregated market-level demand signal for a single ESCO skill.
@@ -254,9 +250,7 @@ class SkillDemandMetric(BaseModel):
 
     model_config = {"extra": "ignore"}
 
-    skill_label: str = Field(
-        description="Human-readable label (ESCO preferred label or raw text)."
-    )
+    skill_label: str = Field(description="Human-readable label (ESCO preferred label or raw text).")
     esco_uri: Optional[str] = Field(
         default=None,
         description="ESCO concept URI, if the skill was successfully mapped.",
@@ -327,6 +321,6 @@ class MarketSnapshot(BaseModel):
         description="Proportion of demanded skills classified as 'green'.",
     )
     platform: str = Field(
-        default="kariyer.net",
+        default="linkedin",
         description="Data source platform for this snapshot.",
     )

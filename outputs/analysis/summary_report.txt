@@ -1,0 +1,49 @@
+=================================================================
+ESCO Skill Demand Analysis — Turkey Tech Sector LinkedIn Jobs
+Skillab-aligned | ESCO v1.2 | Semantic extraction (threshold=0.50)
+=================================================================
+Total job postings      : 431
+With digital skills     : 430 (99.8%)
+With green skills       : 117 (27.1%)
+With general skills     : 430 (99.8%)
+Unique digital skills   : 576
+Unique green skills     : 64
+Unique general skills   : 1588
+
+TOP 10 DIGITAL SKILLS (ESCO):
+   1. python (computer programming)                       110 jobs (25.5%)
+   2. computer engineering                                 90 jobs (20.9%)
+   3. software metrics                                     76 jobs (17.6%)
+   4. solution deployment                                  76 jobs (17.6%)
+   5. sql                                                  75 jobs (17.4%)
+   6. tools for software configuration management          68 jobs (15.8%)
+   7. devops                                               60 jobs (13.9%)
+   8. agile development                                    57 jobs (13.2%)
+   9. execute software tests                               56 jobs (13.0%)
+  10. java (computer programming)                          54 jobs (12.5%)
+
+TOP 10 GREEN SKILLS (ESCO):
+   1. resource-efficient technologies                      16 jobs (3.7%)
+   2. impact investing                                     11 jobs (2.6%)
+   3. produce sustainable products                         11 jobs (2.6%)
+   4. seek innovation in current practices                 10 jobs (2.3%)
+   5. ecosystem management                                  9 jobs (2.1%)
+   6. collaborate on international energy projects          8 jobs (1.9%)
+   7. promote sustainable energy                            7 jobs (1.6%)
+   8. sustainable technologies                              7 jobs (1.6%)
+   9. detect bottlenecks                                    6 jobs (1.4%)
+  10. corporate sustainability                              6 jobs (1.4%)
+
+TOP 10 GENERAL / TRANSVERSAL SKILLS (ESCO):
+   1. develop production line                             143 jobs (33.2%)
+   2. design graphics                                     135 jobs (31.3%)
+   3. assume responsibility                               130 jobs (30.2%)
+   4. think analytically                                  109 jobs (25.3%)
+   5. solve problems                                       92 jobs (21.3%)
+   6. design customer experiences                          89 jobs (20.6%)
+   7. interact with users to gather requirements           85 jobs (19.7%)
+   8. provide user documentation                           71 jobs (16.5%)
+   9. write job descriptions                               70 jobs (16.2%)
+  10. communication                                        69 jobs (16.0%)
+
+=================================================================

@@ -33,19 +33,16 @@ Project: EU Horizon Skill Intelligence Hub
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
-from datetime import datetime
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import networkx as nx
-import numpy as np
 
 from src.utils.logger import get_logger
 from src.utils.models import (
     JobDetail,
     MarketSnapshot,
-    MatchMethod,
     SkillCategory,
     SkillDemandMetric,
     SkillMatch,
@@ -106,20 +103,12 @@ class GapAnalyzer:
             total_jobs=total_jobs,
         )
 
-        flat_matches: List[SkillMatch] = [
-            m for matches in skill_matches_per_job for m in matches
-        ]
+        flat_matches: List[SkillMatch] = [m for matches in skill_matches_per_job for m in matches]
 
-        demand_counter, category_map, uri_map = self._aggregate_demand(
-            flat_matches, total_jobs
-        )
-        unmapped_count = sum(
-            1 for m in flat_matches if not m.is_mapped
-        )
+        demand_counter, category_map, uri_map = self._aggregate_demand(flat_matches, total_jobs)
+        unmapped_count = sum(1 for m in flat_matches if not m.is_mapped)
 
-        top_metrics = self._build_demand_metrics(
-            demand_counter, category_map, uri_map, total_jobs
-        )
+        top_metrics = self._build_demand_metrics(demand_counter, category_map, uri_map, total_jobs)
 
         total_extracted = len(flat_matches)
         gap_score = (unmapped_count / total_extracted) if total_extracted else 0.0
@@ -184,7 +173,11 @@ class GapAnalyzer:
 
         for matches in skill_matches_per_job:
             labels = [
-                (m.esco_skill.preferred_label if m.esco_skill else m.extracted_skill.normalized_name)
+                (
+                    m.esco_skill.preferred_label
+                    if m.esco_skill
+                    else m.extracted_skill.normalized_name
+                )
                 for m in matches
                 if m.is_mapped or m.extracted_skill.confidence_score > 0.7
             ]
@@ -334,16 +327,12 @@ class GapAnalyzer:
         return metrics
 
     @staticmethod
-    def _category_ratio(
-        metrics: List[SkillDemandMetric], category: SkillCategory
-    ) -> float:
+    def _category_ratio(metrics: List[SkillDemandMetric], category: SkillCategory) -> float:
         """Fraction of total demand occupied by a specific skill category."""
         total = sum(m.occurrence_count for m in metrics)
         if not total:
             return 0.0
-        category_total = sum(
-            m.occurrence_count for m in metrics if m.category == category
-        )
+        category_total = sum(m.occurrence_count for m in metrics if m.category == category)
         return category_total / total
 
     # -----------------------------------------------------------------------
