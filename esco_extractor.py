@@ -53,18 +53,6 @@ def _translate_batch(texts: list[str], delay: float = 0.5) -> list[str]:
 SKILLS_FULL_CSV = Path("data/esco/skills_en.csv")
 
 
-def _load_uri_maps(digital_csv: Path, green_csv: Path):
-    # Delegate loading to shared loader which also returns occupations and relations
-    digital_uris, green_uris, uri_to_label, occupation_uri_to_label, occupation_to_skill_uris = load_esco_taxonomy(
-        data_dir=Path("data/esco"),
-        digital_csv=digital_csv,
-        green_csv=green_csv,
-        skills_csv=SKILLS_FULL_CSV,
-    )
-    # Keep backward-compatible return (digital, green, uri_to_label)
-    return digital_uris, green_uris, uri_to_label
-
-
 def _classify_uris(
     uris: list[str],
     digital_uris: set[str],
@@ -113,7 +101,12 @@ def main():
     args = parser.parse_args()
 
     print("[1] Loading ESCO sub-collection CSVs...")
-    digital_uris, green_uris, uri_to_label = _load_uri_maps(args.digital, args.green)
+    digital_uris, green_uris, uri_to_label = load_esco_taxonomy(
+        data_dir=Path("data/esco"),
+        digital_csv=args.digital,
+        green_csv=args.green,
+        skills_csv=SKILLS_FULL_CSV,
+    )
     print(f"    Digital URIs : {len(digital_uris)}")
     print(f"    Green URIs   : {len(green_uris)}")
 
